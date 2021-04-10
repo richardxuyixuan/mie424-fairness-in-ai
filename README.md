@@ -10,6 +10,7 @@ Specifically, the code is modified based on the original repository "Fairness in
 3. matplotlib
 4. CVXPY
 5. DCCP
+6. urllib2
 
 #### Using the code
 
