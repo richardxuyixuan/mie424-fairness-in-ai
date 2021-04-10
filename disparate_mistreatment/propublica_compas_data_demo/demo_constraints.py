@@ -51,6 +51,32 @@ def test_compas_data():
 	w_cons, acc_cons, s_attr_to_fp_fn_test_cons  = train_test_classifier()
 	print("\n-----------------------------------------------------------------------------------\n")
 
+	print("\n\n== Constraints on FNR ==")	# setting parameter for constraints
+	cons_type = 2 # FPR constraint -- just change the cons_type, the rest of parameters should stay the same
+	tau = 5.0
+	mu = 1.2
+	sensitive_attrs_to_cov_thresh = {"race": {0:{0:0, 1:0}, 1:{0:0, 1:0}, 2:{0:0, 1:0}}} # zero covariance threshold, means try to get the fairest solution
+	cons_params = {"cons_type": cons_type, 
+					"tau": tau, 
+					"mu": mu, 
+					"sensitive_attrs_to_cov_thresh": sensitive_attrs_to_cov_thresh}
+
+	w_cons, acc_cons, s_attr_to_fp_fn_test_cons  = train_test_classifier()
+	print("\n-----------------------------------------------------------------------------------\n")
+
+	print("\n\n== Constraints on both FPR and FNR ==")	# setting parameter for constraints
+	cons_type = 4 # FPR constraint -- just change the cons_type, the rest of parameters should stay the same
+	tau = 5.0
+	mu = 1.2
+	sensitive_attrs_to_cov_thresh = {"race": {0:{0:0, 1:0}, 1:{0:0, 1:0}, 2:{0:0, 1:0}}} # zero covariance threshold, means try to get the fairest solution
+	cons_params = {"cons_type": cons_type, 
+					"tau": tau, 
+					"mu": mu, 
+					"sensitive_attrs_to_cov_thresh": sensitive_attrs_to_cov_thresh}
+
+	w_cons, acc_cons, s_attr_to_fp_fn_test_cons  = train_test_classifier()
+	print("\n-----------------------------------------------------------------------------------\n")
+
 	return
 
 
