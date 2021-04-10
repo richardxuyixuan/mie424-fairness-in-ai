@@ -1,5 +1,5 @@
 from __future__ import division
-import urllib2
+from urllib.request import urlopen
 import os,sys
 import numpy as np
 import pandas as pd
@@ -8,7 +8,7 @@ from sklearn import feature_extraction
 from sklearn import preprocessing
 from random import seed, shuffle
 
-sys.path.insert(0, '../../fair_classification/') # the code for fair classification is in this directory
+sys.path.insert(0, '../disparate_mistreatment/') # the code for fair classification is in this directory
 import utils as ut
 
 SEED = 1234
@@ -22,19 +22,19 @@ np.random.seed(SEED)
 
 def check_data_file(fname):
     files = os.listdir(".") # get the current directory listing
-    print "Looking for file '%s' in the current directory..." % fname
+    print("Looking for file '%s' in the current directory..." % fname)
 
     if fname not in files:
-        print "'%s' not found! Downloading from GitHub..." % fname
+        print("'%s' not found! Downloading from GitHub..." % fname)
         addr = "https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv"
-        response = urllib2.urlopen(addr)
+        response = urlopen(addr)
         data = response.read()
-        fileOut = open(fname, "w")
+        fileOut = open(fname, "wb")
         fileOut.write(data)
         fileOut.close()
-        print "'%s' download and saved locally.." % fname
+        print("'%s' download and saved locally.." % fname)
     else:
-        print "File found in current directory.."
+        print("File found in current directory..")
     
 
 def load_compas_data():
@@ -91,9 +91,9 @@ def load_compas_data():
 
 	
 	
-	print "\nNumber of people recidivating within two years"
-	print pd.Series(y).value_counts()
-	print "\n"
+	print("\nNumber of people recidivating within two years")
+	print(pd.Series(y).value_counts())
+	print("\n")
 
 
 	X = np.array([]).reshape(len(y), 0) # empty array with num rows same as num examples, will hstack the features to it
@@ -139,7 +139,7 @@ def load_compas_data():
 	# sys.exit(1)
 
 	"""permute the date randomly"""
-	perm = range(0,X.shape[0])
+	perm = list(range(0,X.shape[0]))
 	shuffle(perm)
 	X = X[perm]
 	y = y[perm]
@@ -151,7 +151,7 @@ def load_compas_data():
 
 	feature_names = ["intercept"] + feature_names
 	assert(len(feature_names) == X.shape[1])
-	print "Features we will be using for classification are:", feature_names, "\n"
+	print("Features we will be using for classification are:"+str(feature_names)+"\n")
 
 
 	return X, y, x_control
