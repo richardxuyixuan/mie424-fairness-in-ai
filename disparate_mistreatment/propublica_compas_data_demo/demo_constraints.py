@@ -18,7 +18,7 @@ def test_data(dataset):
 		X, y, x_control = load_bank_marketing_data()
 		sensitive_attr = "age"
 	elif dataset == "meps":
-		X, y, x_control = load_meps_data() # TO DO: FIX THIS
+		X, y, x_control = load_meps_data()
 		sensitive_attr = "RACE"
 	sensitive_attrs = list(x_control.keys())
 	
