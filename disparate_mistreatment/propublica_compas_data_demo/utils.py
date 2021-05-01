@@ -152,7 +152,7 @@ def compute_cross_validation_error(x_all, y_all, x_control_all, num_folds, loss_
     train_folds = []
     test_folds = []
     n_samples = len(y_all)
-    train_fold_size = 0.7 # the rest of 0.3 is for testing
+    train_fold_size = 0.8 # the rest of 0.2 is for testing
 
     # split the data into folds for cross-validation
     for i in range(0,num_folds):

@@ -101,11 +101,39 @@ def train_model_disp_mist(x, y, x_control, loss_function, EPS, cons_params=None)
         if cons_params is not None: # in case we passed these parameters as a part of dccp constraints
             if cons_params.get("tau") is not None: tau = cons_params["tau"]
             if cons_params.get("mu") is not None: mu = cons_params["mu"]
-
-        prob.solve(method='dccp', tau=tau, mu=mu, tau_max=1e10,
-            solver=cvxpy.ECOS, verbose=False, 
-            feastol=EPS, abstol=EPS, reltol=EPS,feastol_inacc=EPS, abstol_inacc=EPS, reltol_inacc=EPS,
-            max_iters=max_iters, max_iter=max_iter_dccp)
+            
+        try:
+            print("dccp")
+            prob.solve(method='ECOS', tau=tau, mu=mu, tau_max=1e10,
+                solver=cvxpy.ECOS, verbose=False, 
+                feastol=EPS, abstol=EPS, reltol=EPS,feastol_inacc=EPS, abstol_inacc=EPS, reltol_inacc=EPS,
+                max_iters=max_iters, max_iter=max_iter_dccp)
+        except:
+            try:
+                print("ECOS")
+                prob.solve(method='dccp', tau=tau, mu=mu, tau_max=1e10,
+                    solver=cvxpy.ECOS, verbose=False, 
+                    feastol=1e-3, abstol=1e-3, reltol=1e-3,feastol_inacc=1e-3, abstol_inacc=1e-3, reltol_inacc=1e-3,
+                    max_iters=max_iters, max_iter=max_iter_dccp)
+            except:
+                try:    
+                    print("OSQP")    
+                    prob.solve(method='dccp', tau=tau, mu=mu, tau_max=1e10,
+                    solver=cvxpy.OSQP, verbose=False, 
+                    eps_abs=EPS, eps_rel=EPS,
+                    max_iters=max_iters, max_iter=max_iter_dccp)
+                except:
+                    try:
+                        print("SCS")
+                        prob.solve(method='dccp', tau=tau, mu=mu, tau_max=1e10,
+                        solver=cvxpy.SCS, verbose=False, eps=EPS,
+                        max_iters=max_iters, max_iter=max_iter_dccp)
+                    except:
+                        print("CVXOPT")
+                        prob.solve(method='dccp', tau=tau, mu=mu, tau_max=1e10,
+                        solver=cvxpy.CVXOPT, verbose=False, 
+                        feastol=EPS, abstol=EPS, reltol=EPS,
+                        max_iters=max_iters, max_iter=max_iter_dccp)
 
         
         assert(prob.status == "Converged" or prob.status == "optimal")
@@ -156,17 +184,16 @@ def get_clf_stats(w, x_train, y_train, x_control_train, x_test, y_test, x_contro
         
         print_stats = False # we arent printing the stats for the train set to avoid clutter
 
-        # uncomment these lines to print stats for the train fold
-        # print "*** Train ***"
-        # print "Accuracy: %0.3f" % (train_score)
-        # print_stats = True
+        print("*** Train ***")
+        print("Accuracy: %0.3f" % (train_score))
+        print_stats = True
         s_attr_to_fp_fn_train = get_fpr_fnr_sensitive_features(y_train, all_class_labels_assigned_train, x_control_train, sensitive_attrs, print_stats)
         cov_all_train[s_attr] = get_sensitive_attr_constraint_fpr_fnr_cov(None, x_train, y_train, distances_boundary_train, x_control_train[s_attr]) 
         
 
         print("\n")
         print("Accuracy: %0.3f" % (test_score))
-        print_stats = True # only print stats for the test fold
+        print_stats
         s_attr_to_fp_fn_test = get_fpr_fnr_sensitive_features(y_test, all_class_labels_assigned_test, x_control_test, sensitive_attrs, print_stats)
         cov_all_test[s_attr] = get_sensitive_attr_constraint_fpr_fnr_cov(None, x_test, y_test, distances_boundary_test, x_control_test[s_attr]) 
         print("\n")
@@ -284,7 +311,7 @@ def get_fpr_fnr_sensitive_features(y_true, y_pred, x_control, sensitive_attrs, v
         s_attr_to_fp_fn[s] = {}
         s_attr_vals = x_control_internal[s]
         if verbose == True:
-            print("||  s  || FPR. || FNR. ||")
+            print("||  s   || FPR.  || FNR.  ||  DP.  ||  EO.  || FOR.  || FDR.  ||")
         for s_val in sorted(list(set(s_attr_vals))):
             s_attr_to_fp_fn[s][s_val] = {}
             y_true_local = y_true[s_attr_vals==s_val]
@@ -306,18 +333,24 @@ def get_fpr_fnr_sensitive_features(y_true, y_pred, x_control, sensitive_attrs, v
             fnr = float(fn) / float(fn + tp)
             tpr = float(tp) / float(tp + fn)
             tnr = float(tn) / float(tn + fp)
-
+            dp = float(tp) / float(tp + tn + fp + fn)
+            eo = float(tp) / float(tp + fn)
+            FOR = float(fn) / float(fn + tn)
+            fdr = float(fp) / float(tp + fp)
 
             s_attr_to_fp_fn[s][s_val]["fp"] = fp
             s_attr_to_fp_fn[s][s_val]["fn"] = fn
             s_attr_to_fp_fn[s][s_val]["fpr"] = fpr
             s_attr_to_fp_fn[s][s_val]["fnr"] = fnr
+            s_attr_to_fp_fn[s][s_val]["dp"] = dp
+            s_attr_to_fp_fn[s][s_val]["eo"] = eo
+            s_attr_to_fp_fn[s][s_val]["FOR"] = FOR
 
             s_attr_to_fp_fn[s][s_val]["acc"] = (tp + tn) / (tp + tn + fp + fn)
             if verbose == True:
                 if isinstance(s_val, float): # print the int value of the sensitive attr val
                     s_val = int(s_val)
-                print("||  %s  || %0.2f || %0.2f ||" % (s_val, fpr, fnr))
+                print("||  %s  || %0.3f || %0.3f || %0.3f || %0.3f || %0.3f || %0.3f ||" % (s_val, fpr, fnr, dp, eo, FOR, fdr))
 
         
         return s_attr_to_fp_fn
